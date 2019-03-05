@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan  8 09:08:49 2019
+
+@author: DELL
+"""
+import alldata
+import matplotlib.pyplot as plt
+from sklearn import svm
+import numpy as np
+from sklearn.externals import joblib
+from sklearn.utils import shuffle
+
+classifier_re=np.array(alldata.classifier).reshape([-1,24])
+class_label_re=np.array(alldata.class_label).reshape([-1])
+shuffle(classifier_re,class_label_re)
+
+predictor=svm.SVC(C=5,decision_function_shape='ovr',kernel='rbf')
+predictor.fit(classifier_re,class_label_re)
+joblib.dump(predictor,'./svm1_model.model')
+"""
+result1=predictor.predict(alldata.engine[0])
+
+np.set_printoptions(threshold=np.inf)
+print(result1)
+print(result1.tolist().index(1))
+
+fig=plt.figure()
+plt.plot(alldata.engine_cycles[0],result1)
+plt.locator_params(axis='x',nbins=15)
+plt.grid()
+plt.xlabel('Life cycles')
+plt.ylabel('Engine state')
+plt.legend()
+plt.show()
+"""

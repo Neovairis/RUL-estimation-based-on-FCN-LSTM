@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jan  7 20:25:13 2019
+
+@author: DELL
+"""
+import pandas as pd
+from sklearn import preprocessing
+#from sklearn.cluster import KMeans
+import numpy as np
+import matplotlib.pyplot as plt
+from keras.preprocessing import sequence
+
+data001=pd.read_table("./train_FD001.txt",header=None,sep=' ')
+df=pd.DataFrame(data001)
+sensordata=df.iloc[:,2:26]
+sensordata=preprocessing.scale(sensordata)
+cycles=df.iloc[:,1]
+"""
+engine里一共100个单元，每一个单元是对应转数的24维传感器数据
+engine_cycles是对应engine单元的转数
+"""
+engine=[]
+engine_cycles=[]
+for i in range(1,101):
+    engine.append([])
+    engine_cycles.append([])
+    for j in range(len(df)):
+        if df.iloc[j,0]==i:
+            engine[i-1].append(sensordata[j,:])
+            engine_cycles[i-1].append(cycles.iloc[j])
+#print(np.array(engine_cycles[0]),np.array(engine_cycles[0]).shape)
+"""
+classifier的维度为(100，60，24)
+class_label的维度为(100，60)
+"""
+classifier=[]
+for i in range(len(engine)):
+    classifier.append([])
+    classifier[i]=np.vstack((engine[i][:30],engine[i][-30:]))
+#print(classifier[0])
+class_label=[]
+for i in range(len(engine)):
+    class_label.append([])
+    for j in range(60):
+        if j<30:
+            class_label[i].append(0)
+        else:
+            class_label[i].append(1)
+#print(np.array(class_label).shape)
+#print(class_label[0])
+"""
+maxlen对应最大转数，方便mask0
+mask_engine为mask0之后的发动机单元，对应维度为(100，362，24)
+
+maxlen=len(engine[0])
+for i in range(len(engine)):
+    if len(engine[i])>maxlen:
+        maxlen=len(engine[i])
+#print(maxlen)
+
+mask_engine=[]
+mask_engine_cycles=[]
+for i in range(len(engine)):
+    mask_engine.append([])
+    mask_engine_cycles.append([])
+    engine_cycles[i]=np.array(engine_cycles[i]).reshape([-1,1])
+    mask_engine[i]=sequence.pad_sequences(np.array(engine[i]).transpose(),dtype='float64',maxlen=maxlen,padding='pre',value=0.0)
+    mask_engine[i]=np.array(mask_engine[i]).transpose()
+    mask_engine_cycles[i]=sequence.pad_sequences(np.array(engine_cycles[i]).transpose(),dtype='float64',maxlen=maxlen,padding='pre',value=0.0)
+    mask_engine_cycles[i]=np.array(mask_engine_cycles[i]).transpose()
+    mask_engine_cycles[i]=np.array(mask_engine_cycles[i]).reshape(-1)
+    engine_cycles[i]=np.array(engine_cycles[i]).reshape(-1)
+"""
+#print(np.array(mask_engine_cycles).shape)
+#print(mask_engine_cycles[0])
+

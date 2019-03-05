@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec 17 09:33:25 2018
+
+@author: DELL
+"""
+import matplotlib
+matplotlib.use("Agg")
+
+import numpy as np
+from keras.layers import Dense,Dropout,Conv1D,Flatten,normalization
+from keras.models import Sequential
+import pandas as pd
+import matplotlib.pyplot as plt
+import math
+import data1_label
+import datetime
+from keras.callbacks import EarlyStopping
+import os
+
+cwd=os.getcwd()
+def txt_create(name,msg):
+    fullpath=cwd+'/'+name+'.txt'
+    file=open(fullpath,'w')
+    file.write(msg)
+    file.close()
+
+def subtime(date1,date2):
+    date1=datetime.datetime.strptime(date1,"%Y-%m-%d %H:%M:%S")
+    date2=datetime.datetime.strptime(date2,"%Y-%m-%d %H:%M:%S")
+    return date2-date1
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+timestep=31
+
+train_x=data1_label.x_train
+train_y=data1_label.y_train
+
+model=Sequential()
+model.add(Conv1D(70,31,activation='relu',padding='same',input_shape=(timestep,24)))
+#model.add(normalization.BatchNormalization())
+model.add(Conv1D(70,31,activation='relu',padding='same'))
+#model.add(normalization.BatchNormalization())
+
+model.add(Flatten())
+#model.add(Dropout(0.9))
+model.add(Dense(1,activation='relu'))
+
+model.compile(loss='mse',optimizer='adam',metrics=['accuracy'])
+
+startdate=datetime.datetime.now()
+startdate=startdate.strftime("%Y-%m-%d %H:%M:%S")
+
+model.save('./cnn1_1.h5')
+early_stopping=EarlyStopping(monitor='val_loss',patience=20,verbose=1,mode='min')
+history=model.fit(train_x,train_y,epochs=800,batch_size=128,validation_data=(data1_label.x_validate,data1_label.y_validate),callbacks=[early_stopping],verbose=1)
+
+enddate=datetime.datetime.now()
+enddate=enddate.strftime("%Y-%m-%d %H:%M:%S")
+
+print('start date',startdate)
+print('end date',enddate)
+print('time',subtime(startdate,enddate))
+
+loss=history.history['loss']
+val_loss=history.history['val_loss']
+
+plt.plot(loss,label='train loss')
+plt.plot(val_loss,label='validate loss')
+plt.legend()
+plt.savefig('loss_cnn1.jpg')
+
+loss=','.join([str(x) for x in loss])
+val_loss='\n'.join([str(x) for x in val_loss])
+
+txt_create('loss_cnn1',loss)
+txt_create('val_loss_cnn1',val_loss)

@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 27 22:27:49 2018
+
+@author: DELL
+"""
+import matplotlib
+matplotlib.use("Agg")
+from keras.layers import Dense,Dropout,LSTM
+from keras.models import Sequential
+import datetime
+import data1_label
+from keras.callbacks import EarlyStopping
+import os
+import matplotlib.pyplot as plt
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+timestep=31
+
+def subtime(date1,date2):
+    date1=datetime.datetime.strptime(date1,"%Y-%m-%d %H:%M:%S")
+    date2=datetime.datetime.strptime(date2,"%Y-%m-%d %H:%M:%S")
+    return date2-date1
+
+cwd=os.getcwd()
+def txt_create(name,msg):
+    fullpath=cwd+'/'+name+'.txt'
+    file=open(fullpath,'w')
+    file.write(msg)
+    file.close()
+
+train_x=data1_label.x_train
+train_y=data1_label.y_train
+
+model=Sequential()
+model.add(LSTM(70,activation='relu',input_shape=(timestep,24)))
+#model.add(LSTM(300,activation='relu'))
+#model.add(Dropout(0.9))
+model.add(Dense(1))
+
+model.compile(loss='mse',optimizer='adam',metrics=['accuracy'])
+#保存最好模型，当loss降低时保存
+startdate=datetime.datetime.now()
+startdate=startdate.strftime("%Y-%m-%d %H:%M:%S")
+
+model.save('./lstm1.h5')
+early_stopping=EarlyStopping(monitor='val_loss',patience=20,verbose=1,mode='min')
+history=model.fit(train_x,train_y,epochs=800,batch_size=128,validation_data=(data1_label.x_validate,data1_label.y_validate),callbacks=[early_stopping],verbose=1)
+
+enddate=datetime.datetime.now()
+enddate=enddate.strftime("%Y-%m-%d %H:%M:%S")
+
+print('start date',startdate)
+print('end date',enddate)
+print('time',subtime(startdate,enddate))
+
+loss=history.history['loss']
+val_loss=history.history['val_loss']
+
+plt.plot(loss,label='train loss')
+plt.plot(val_loss,label='validate loss')
+plt.legend()
+plt.savefig('loss_fcnlstm1.jpg')
+
+loss=','.join([str(x) for x in loss])
+val_loss='\n'.join([str(x) for x in val_loss])
+
+txt_create('loss_lstm1',loss)
+txt_create('val_loss_lstm1',val_loss)
+

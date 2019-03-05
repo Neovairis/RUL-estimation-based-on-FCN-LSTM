@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan  8 17:21:15 2019
+
+@author: DELL
+"""
+import pandas as pd
+from sklearn import preprocessing
+#from sklearn.cluster import KMeans
+import numpy as np
+#import matplotlib.pyplot as plt
+from keras.preprocessing import sequence
+
+testdata001=pd.read_table("./test_FD001.txt",header=None,sep=' ')
+rul001=pd.read_table("./RUL_FD001.txt",header=None,sep=' ')
+df=pd.DataFrame(testdata001)
+sensordata_test=df.iloc[:,2:26]
+sensordata_test=preprocessing.scale(sensordata_test)
+cycles_test=df.iloc[:,1]
+"""
+engine里一共100个单元，每一个单元是对应转数的24维传感器数据
+engine_cycles是对应engine单元的转数
+"""
+engine_test=[]
+engine_cycles_test=[]
+for i in range(1,101):
+    engine_test.append([])
+    engine_cycles_test.append([])
+    for j in range(len(df)):
+        if df.iloc[j,0]==i:
+            engine_test[i-1].append(sensordata_test[j,:])
+            engine_cycles_test[i-1].append(cycles_test.iloc[j])
+#print(np.array(engine_cycles[0]),np.array(engine_cycles[0]).shape)
+test_x,test_c=[],[]
+timestep=31
+for i in range(len(engine_test)):
+    test_x.append([])
+    test_c.append([])
+    for j in range(len(engine_test[i])-timestep+1):
+        x=np.array(engine_test[i])[j:j+timestep,:]
+        c=np.array(engine_cycles_test[i])[j:j+timestep,np.newaxis]
+        test_x[i].append(x.tolist())
+        test_c[i].append(c)
+    #print(np.array(test_x[i]).shape,np.array(test_c[i]).shape)   
+df1=pd.DataFrame(rul001)
+test_y=df1.iloc[:,0]
+#print(np.array(test_x[0]).shape)
+#print(test_y)
+"""
+testx=test_x[0]
+testc=test_c[0]
+for i in range(1,len(engine_test)):
+    testx=np.concatenate((testx,test_x[i]),axis=0)
+    testc=np.concatenate((testc,test_c[i]),axis=0)
+#print(testx.shape,testc.shape)
+"""
